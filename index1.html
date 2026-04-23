@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA Compliance System v4 — Fully Automated</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D2137;--blue:#1B5FA8;--sky:#3A8EDB;--teal:#0A9D8A;
+  --gold:#E8A020;--red:#D93025;--green:#1E7E4A;--purple:#5B4FCF;
+  --bg:#F4F7FB;--card:#fff;--border:#E2E8F2;--text:#1A2635;--muted:#6B7C93;
+  --font:'DM Sans',sans-serif;--serif:'DM Serif Display',serif;
+  --shadow:0 2px 12px rgba(13,33,55,.08);--shadow-lg:0 8px 32px rgba(13,33,55,.13);--r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+#pw-gate{position:fixed;inset:0;z-index:99999;background:#0D2137;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0}
+#pw-gate.hidden{display:none!important}
+#pw-box{background:#fff;border-radius:16px;padding:40px 36px;width:340px;box-shadow:0 8px 40px rgba(0,0,0,0.35);text-align:center}
+#pw-box h2{font-family:'DM Serif Display',serif;color:#0D2137;font-size:22px;margin-bottom:6px}
+#pw-box p{color:#6B7C93;font-size:13px;margin-bottom:24px}
+#pw-input{width:100%;padding:11px 14px;border:2px solid #E2E8F2;border-radius:8px;font-size:15px;outline:none;transition:border .2s;font-family:'DM Sans',sans-serif;letter-spacing:2px;text-align:center}
+#pw-input:focus{border-color:#1B5FA8}
+#pw-btn{margin-top:14px;width:100%;padding:12px;background:#1B5FA8;color:#fff;border:none;border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:background .2s}
+#pw-btn:hover{background:#3A8EDB}
+#pw-err{color:#D93025;font-size:12px;margin-top:10px;min-height:18px}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:228px;min-height:100vh;background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+.sidebar-logo{padding:22px 20px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo h1{font-family:var(--serif);font-size:17px;color:#fff;line-height:1.2}
+.sidebar-logo span{font-size:11px;color:rgba(255,255,255,.45);display:block;margin-top:3px}
+.nav{flex:1;padding:12px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:rgba(255,255,255,.6);cursor:pointer;transition:all .18s;font-size:13px;font-weight:500;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:rgba(58,142,219,.18);color:#fff;border-left-color:var(--sky)}
+.nav-item .ni{width:18px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3)}
+.scheduler-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;margin-top:4px}
+.scheduler-pill.on{background:rgba(30,126,74,.35);color:#5EE89A}
+.scheduler-pill.off{background:rgba(255,255,255,.07);color:rgba(255,255,255,.4)}
+.main{margin-left:228px;flex:1;padding:28px 32px;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.topbar-left h2{font-family:var(--serif);font-size:22px;color:var(--navy)}
+.topbar-left p{font-size:12px;color:var(--muted);margin-top:2px}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px}
+.metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.metric{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.metric::before{content:'';position:absolute;right:-10px;top:-10px;width:64px;height:64px;border-radius:50%;opacity:.07}
+.metric.blue::before{background:var(--blue)}.metric.gold::before{background:var(--gold)}
+.metric.red::before{background:var(--red)}.metric.green::before{background:var(--green)}
+.metric-icon{font-size:20px;margin-bottom:8px}
+.metric-val{font-size:28px;font-weight:700;color:var(--navy);line-height:1}
+.metric-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.metric-sub{font-size:11px;margin-top:3px;font-weight:500}
+.metric.blue .metric-sub{color:var(--blue)}.metric.gold .metric-sub{color:var(--gold)}
+.metric.red .metric-sub{color:var(--red)}.metric.green .metric-sub{color:var(--green)}
+.section{display:none}.section.active{display:block}
+.section-title{font-family:var(--serif);font-size:17px;color:var(--navy);margin-bottom:16px}
+.section-sub{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;margin-top:18px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:#F8FAFD}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-pending{background:#FFF7E6;color:#B45309}.b-overdue{background:#FEE2E2;color:#B91C1C}
+.b-done{background:#DCFCE7;color:#15803D}.b-remind{background:#EDE9FE;color:#5B21B6}
+.b-gst{background:#D1FAE5;color:#065F46}.b-tds{background:#DBEAFE;color:#1E40AF}.b-roc{background:#EDE9FE;color:#4C1D95}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1450A0}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#166B3C}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:#C88018}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#4A3DB8}
+.btn-outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}.btn-outline:hover{background:#F0F6FF}
+.btn-sm{padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-family:var(--font)}
+.btn-danger{padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid #FCA5A5;background:#FEF2F2;color:var(--red);cursor:pointer;font-family:var(--font)}
+.btn-wa{background:#25D366;color:#fff;padding:5px 11px;font-size:12px;font-weight:600;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-mail{background:var(--blue);color:#fff;padding:5px 11px;font-size:12px;font-weight:600;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.btn-ai{background:linear-gradient(135deg,#5B4FCF,#3A8EDB);color:#fff;padding:5px 11px;font-size:12px;font-weight:600;border-radius:6px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+label.lbl{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:5px;margin-top:14px}
+input,select,textarea{width:100%;font-size:13px;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;outline:none;transition:border .2s;font-family:var(--font);color:var(--text);background:#fff}
+input:focus,select:focus,textarea:focus{border-color:var(--sky)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.svc-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.svc-cb{display:flex;align-items:center;gap:6px;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
+.svc-cb input{width:auto}
+.svc-cb.checked.gst{background:#D1FAE5;border-color:#10B981;color:#065F46}
+.svc-cb.checked.tds{background:#DBEAFE;border-color:#3B82F6;color:#1E40AF}
+.svc-cb.checked.roc{background:#EDE9FE;border-color:#8B5CF6;color:#4C1D95}
+.drop-zone{border:2px dashed var(--sky);border-radius:var(--r);padding:36px 24px;text-align:center;cursor:pointer;transition:background .2s;background:#F0F7FF}
+.drop-zone:hover{background:#DDF0FF}.drop-zone input{display:none}
+.progress-bar{height:5px;background:var(--border);border-radius:3px;margin-top:12px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--sky);border-radius:3px;transition:width .3s}
+.alert{border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:14px;border:1px solid}
+.alert-warn{background:#FFFBEB;border-color:#FDE68A;color:#92400E}
+.alert-info{background:#EFF6FF;border-color:#BFDBFE;color:#1E40AF}
+.alert-success{background:#F0FDF4;border-color:#A7F3D0;color:#065F46}
+.alert-red{background:#FEF2F2;border-color:#FCA5A5;color:#991B1B}
+.alert-purple{background:#F5F3FF;border-color:#C4B5FD;color:#4C1D95}
+.remind-card{border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;background:#fff}
+.remind-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.remind-card-name{font-weight:700;font-size:15px;color:var(--navy)}
+.remind-card-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.action-row{display:flex;gap:6px;flex-wrap:wrap}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{font-size:13px;font-weight:600;color:var(--navy)}
+.settings-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.toggle{position:relative;width:42px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#CBD5E1;border-radius:20px;cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;left:3px;top:3px;transition:.3s}
+.toggle input:checked + .toggle-slider{background:var(--green)}
+.toggle input:checked + .toggle-slider::before{transform:translateX(20px)}
+.auto-status{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#F0FDF4;border:1px solid #A7F3D0;border-radius:8px;font-size:13px;color:var(--green);font-weight:600;margin-bottom:16px}
+.dot-live{width:10px;height:10px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+.dot-sched{width:10px;height:10px;background:var(--purple);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.pill{padding:5px 14px;font-size:12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-weight:500;transition:all .15s}
+.pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.client-card{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.client-name{font-weight:700;font-size:15px;color:var(--navy)}
+.client-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.svc-tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-right:3px;margin-top:6px}
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.log-item:last-child{border-bottom:none}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.log-dot.sent{background:var(--green)}.log-dot.pending{background:var(--gold)}.log-dot.failed{background:var(--red)}.log-dot.ai{background:var(--purple)}
+@media(max-width:768px){.sidebar{width:100%;min-height:auto;position:relative;flex-direction:row;flex-wrap:wrap}.main{margin-left:0;padding:16px}.metrics-row{grid-template-columns:1fr 1fr}.grid2,.grid3{grid-template-columns:1fr}}
+.empty{text-align:center;color:var(--muted);padding:40px;font-size:13px}
+.search-box{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;width:100%;margin-bottom:14px;font-family:var(--font);font-size:13px}
+.search-box:focus{outline:none;border-color:var(--sky)}
+.email-preview{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;font-size:13px;white-space:pre-wrap;font-family:Georgia,serif;line-height:1.8;color:#333;max-height:320px;overflow-y:auto}
+
+/* ── Scheduler status bar ── */
+.sched-bar{display:flex;align-items:center;gap:12px;padding:12px 18px;background:linear-gradient(90deg,#F5F3FF,#EFF6FF);border:1px solid #C4B5FD;border-radius:10px;margin-bottom:16px;flex-wrap:wrap}
+.sched-bar-title{font-weight:700;font-size:13px;color:var(--purple);flex:1}
+.sched-bar-meta{font-size:12px;color:var(--muted)}
+.next-run-chip{padding:3px 10px;border-radius:20px;background:#EDE9FE;color:#5B21B6;font-size:11px;font-weight:700;white-space:nowrap}
+
+/* ── AI badge ── */
+.ai-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;background:linear-gradient(135deg,#EDE9FE,#DBEAFE);color:#4338CA;letter-spacing:.3px}
+
+/* ── Timeline swimlane ── */
+.timeline{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.tl-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;font-size:12px;border:1px solid var(--border);background:#fff}
+.tl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tl-dot.gst{background:#10B981}.tl-dot.tds{background:#3B82F6}.tl-dot.roc{background:#8B5CF6}
+.tl-date{font-weight:700;color:var(--navy);width:80px;flex-shrink:0}
+.tl-form{flex:1;color:var(--text)}
+.tl-days{font-weight:700;font-size:11px}
+.tl-days.urgent{color:var(--red)}.tl-days.warn{color:var(--gold)}.tl-days.safe{color:var(--green)}
+</style>
+</head>
+<body>
+<!-- PASSWORD GATE -->
+<div id="pw-gate">
+  <div id="pw-box">
+    <h2>CA Compliance System</h2>
+    <p>Enter your password to continue</p>
+    <input id="pw-input" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()" autofocus />
+    <button id="pw-btn" onclick="checkPw()">Unlock</button>
+    <div id="pw-err"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PW = "Gk@123";
+  var SK = "ca_compliance_auth";
+  if(sessionStorage.getItem(SK) === "1"){
+    document.getElementById("pw-gate").classList.add("hidden");
+  }
+  window.checkPw = function(){
+    var v = document.getElementById("pw-input").value;
+    if(v === PW){
+      sessionStorage.setItem(SK,"1");
+      document.getElementById("pw-gate").classList.add("hidden");
+    } else {
+      document.getElementById("pw-err").textContent = "Incorrect password. Please try again.";
+      document.getElementById("pw-input").value = "";
+      document.getElementById("pw-input").focus();
+    }
+  };
+})();
+</script>
+<!-- END PASSWORD GATE -->
+<div class="shell">
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>CA Compliance<br>System <span style="font-family:var(--font);font-size:12px;color:rgba(255,255,255,.5);font-weight:400">v4</span></h1>
+    <span id="today-lbl"></span>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="goTab('dashboard')"><span class="ni">🏠</span> Dashboard</div>
+    <div class="nav-item" onclick="goTab('scheduler')"><span class="ni">⚡</span> Auto Scheduler</div>
+    <div class="nav-item" onclick="goTab('reminders')"><span class="ni">🔔</span> Reminders</div>
+    <div class="nav-item" onclick="goTab('import')"><span class="ni">📥</span> Import Clients</div>
+    <div class="nav-item" onclick="goTab('add')"><span class="ni">➕</span> Add Client</div>
+    <div class="nav-item" onclick="goTab('clients')"><span class="ni">👥</span> Clients</div>
+    <div class="nav-item" onclick="goTab('dues')"><span class="ni">📅</span> Due Dates</div>
+    <div class="nav-item" onclick="goTab('settings')"><span class="ni">⚙️</span> Settings</div>
+    <div class="nav-item" onclick="goTab('log')"><span class="ni">📋</span> Email Log</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div>Auto-send: <span id="auto-status-txt" style="font-weight:700">OFF</span></div>
+    <div id="sched-footer-pill" class="scheduler-pill off">● Scheduler OFF</div>
+  </div>
+</aside>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────── -->
+<main class="main">
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="section active">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Dashboard</h2>
+      <p>GST · TDS · ROC — Perpetual automated compliance tracker</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-gold" onclick="goTab('reminders')">🔔 Reminders</button>
+      <button class="btn btn-purple" onclick="goTab('scheduler')">⚡ Scheduler</button>
+    </div>
+  </div>
+  <div id="auto-banner" style="display:none"></div>
+  <div id="sched-status-dash" style="display:none"></div>
+  <div class="metrics-row" id="metrics"></div>
+  <div class="card" id="upcoming-card"></div>
+</div>
+
+<!-- AUTO SCHEDULER -->
+<div id="tab-scheduler" class="section">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Auto Scheduler</h2>
+      <p>Fully automated — emails fire without any manual action</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-success" id="sched-toggle-btn" onclick="toggleScheduler()">▶ Start Scheduler</button>
+    </div>
+  </div>
+
+  <div id="sched-live-bar" style="display:none" class="sched-bar">
+    <div><span class="dot-sched" style="display:inline-block;margin-right:4px"></span><span class="sched-bar-title">🤖 Scheduler is RUNNING</span></div>
+    <span class="sched-bar-meta" id="sched-last-run">Last check: —</span>
+    <span class="next-run-chip" id="sched-next-run">Next: —</span>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <p class="section-title">⚡ How Perpetual Automation Works</p>
+    <div class="alert alert-purple" style="margin-bottom:14px">
+      <strong>🤖 Fully Autonomous Pipeline:</strong> Once started, the scheduler runs a background timer every day at your chosen time. It automatically (1) calculates upcoming dues for every client, (2) optionally uses Claude AI to draft personalised emails, (3) sends via EmailJS — <em>no clicking, no manual triggers</em>. The system tracks sent emails per day to avoid duplicates, and cycles perpetually through the compliance calendar.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px">🔄 Automation Pipeline</div>
+        <div class="timeline" id="pipeline-steps">
+          <div class="tl-item"><div class="tl-dot gst"></div><div class="tl-form"><strong>Step 1</strong> — Scheduler wakes at set time</div></div>
+          <div class="tl-item"><div class="tl-dot tds"></div><div class="tl-form"><strong>Step 2</strong> — Scans all clients for upcoming dues</div></div>
+          <div class="tl-item"><div class="tl-dot roc"></div><div class="tl-form"><strong>Step 3</strong> — Checks if reminder already sent today</div></div>
+          <div class="tl-item"><div class="tl-dot gst"></div><div class="tl-form"><strong>Step 4</strong> — AI drafts personalised email (if key set)</div></div>
+          <div class="tl-item"><div class="tl-dot tds"></div><div class="tl-form"><strong>Step 5</strong> — Sends via EmailJS with 1 sec throttle</div></div>
+          <div class="tl-item"><div class="tl-dot roc"></div><div class="tl-form"><strong>Step 6</strong> — Logs result, waits for next trigger</div></div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:10px">⚙️ Scheduler Settings</div>
+        <label class="lbl" style="margin-top:0">Daily Send Time (24-hr)</label>
+        <input type="time" id="sched-time" value="09:00" onchange="saveSchedSettings()">
+        <label class="lbl">Remind X days before due date</label>
+        <select id="remind-days-setting" onchange="saveSettings()">
+          <option value="3">3 days</option>
+          <option value="5" selected>5 days</option>
+          <option value="7">7 days</option>
+          <option value="10">10 days</option>
+        </select>
+        <label class="lbl">Check interval (when tab is open)</label>
+        <select id="sched-interval" onchange="saveSchedSettings()">
+          <option value="60">Every minute</option>
+          <option value="300" selected>Every 5 minutes</option>
+          <option value="900">Every 15 minutes</option>
+          <option value="3600">Every hour</option>
+        </select>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.6">
+          💡 Keep this browser tab open (or use a free uptime pinger like <a href="https://uptimerobot.com" target="_blank" style="color:var(--blue)">UptimeRobot</a>) to trigger the scheduler continuously — even when you're not at the desk.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <p class="section-title">☁️ Always-On Deployment (Recommended)</p>
+    <table class="tbl" style="margin-bottom:14px">
+      <thead><tr><th>Method</th><th>Cost</th><th>Effort</th><th>Emails Even When PC Off?</th><th>Best For</th></tr></thead>
+      <tbody>
+        <tr><td>🌐 <strong>GitHub Pages + UptimeRobot</strong> (⭐ Best)</td><td>Free</td><td>30 min setup</td><td>✅ Yes</td><td>Perpetual, zero maintenance</td></tr>
+        <tr><td>☁️ Netlify / Vercel</td><td>Free</td><td>15 min setup</td><td>✅ Yes</td><td>Easy deploy with CI/CD</td></tr>
+        <tr><td>🖥️ PC always-on + scheduled browser open</td><td>Free</td><td>10 min setup</td><td>❌ PC must be on</td><td>Office server / NUC always running</td></tr>
+        <tr><td>📧 EmailJS Scheduled (Webhooks)</td><td>Free/Paid</td><td>Advanced</td><td>✅ Yes</td><td>Pure serverless; no browser needed</td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert-success">
+      <strong>✅ Zero-maintenance recipe:</strong><br>
+      1. Host this HTML on <strong>GitHub Pages</strong> (free).<br>
+      2. Add your site URL to <strong>UptimeRobot</strong> (free) → ping every 5 minutes → this keeps the browser tab alive and the scheduler ticking.<br>
+      3. Set EmailJS + Claude API key in Settings. Enable Auto Scheduler here.<br>
+      4. <strong>Import client data once</strong> — the system handles everything else forever.
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">📊 Scheduler Run Log (Last 20)</p>
+    <div id="sched-log-list"><div class="empty">No scheduler runs yet.</div></div>
+  </div>
+</div>
+
+<!-- REMINDERS -->
+<div id="tab-reminders" class="section">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Reminders</h2>
+      <p>Clients with compliance due in the coming days</p>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-purple" onclick="sendAllAI()">🤖 AI Draft &amp; Send All</button>
+      <button class="btn btn-success" onclick="sendAllAuto()">📧 Send All Emails Now</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="pills">
+      <div class="pill active" onclick="setRF(this,5)">Next 5 days</div>
+      <div class="pill" onclick="setRF(this,10)">Next 10 days</div>
+      <div class="pill" onclick="setRF(this,30)">Next 30 days</div>
+    </div>
+    <div id="remind-list"></div>
+  </div>
+</div>
+
+<!-- IMPORT EXCEL -->
+<div id="tab-import" class="section">
+  <div class="topbar"><div class="topbar-left"><h2>Import Clients</h2><p>Only human step — bulk-load from Excel template</p></div></div>
+  <div class="card">
+    <div class="alert alert-purple">🤖 <strong>This is the only step that requires human action.</strong> Import your client list once and the system runs perpetually from here on. Use the CA_Client_Template_v3.xlsx format (Name, Contact, Phone, Email, Entity, GSTType, PAN, GSTIN, GST/TDS/ROC columns).</div>
+    <div class="alert alert-info" style="margin-top:0">📌 Existing clients (matched by name) will be updated, not duplicated. You may re-import any time to add new clients.</div>
+    <label class="drop-zone" for="xl-file" id="dz">
+      <input type="file" id="xl-file" accept=".xlsx" onchange="handleXL(event)">
+      <div style="font-size:38px;margin-bottom:8px">📂</div>
+      <div style="font-weight:700;font-size:14px;color:var(--blue)">Click to browse or drag &amp; drop</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">CA_Client_Template_v3.xlsx</div>
+    </label>
+    <div class="progress-bar" id="pb-wrap"><div class="progress-fill" id="pb-fill" style="width:0%"></div></div>
+    <div id="import-msg" style="margin-top:12px;font-size:13px"></div>
+    <div id="import-preview" style="margin-top:14px;overflow-x:auto"></div>
+  </div>
+</div>
+
+<!-- ADD CLIENT -->
+<div id="tab-add" class="section">
+  <div class="topbar"><div class="topbar-left"><h2 id="add-title">Add Client</h2><p>Manual entry for a single client</p></div></div>
+  <div class="card">
+    <div class="grid2">
+      <div><label class="lbl">Client Name *</label><input id="c-name" placeholder="ABC Pvt Ltd"></div>
+      <div><label class="lbl">Contact Person</label><input id="c-contact" placeholder="Ramesh Shah"></div>
+    </div>
+    <div class="grid2">
+      <div><label class="lbl">Phone / WhatsApp *</label><input id="c-phone" placeholder="98XXXXXXXX"></div>
+      <div><label class="lbl">Email ID *</label><input id="c-email" type="email" placeholder="client@email.com"></div>
+    </div>
+    <div class="grid3">
+      <div><label class="lbl">Entity Type *</label>
+        <select id="c-entity">
+          <option>Individual</option><option>HUF</option><option>Proprietorship</option>
+          <option>Partnership</option><option>LLP</option><option>Pvt Ltd</option>
+          <option>Public Ltd</option><option>Trust</option>
+        </select>
+      </div>
+      <div><label class="lbl">GST Filing Type</label>
+        <select id="c-gsttype">
+          <option value="">N/A</option><option>Monthly</option><option>QRMP</option><option>Composition</option>
+        </select>
+      </div>
+      <div><label class="lbl">PAN</label><input id="c-pan" placeholder="AAACA1234A"></div>
+    </div>
+    <label class="lbl" style="margin-top:16px">Services (select applicable)</label>
+    <div class="svc-row">
+      <label class="svc-cb gst"><input type="checkbox" value="GST" onchange="toggleCb(this)"> 🟢 GST</label>
+      <label class="svc-cb tds"><input type="checkbox" value="TDS" onchange="toggleCb(this)"> 🔵 TDS / TCS</label>
+      <label class="svc-cb roc"><input type="checkbox" value="ROC" onchange="toggleCb(this)"> 🟣 ROC / MCA</label>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveClient()">💾 Save Client</button>
+      <button class="btn-sm" onclick="cancelEdit()" id="cancel-btn" style="display:none">Cancel</button>
+    </div>
+    <div id="add-msg" style="margin-top:8px;font-size:13px;font-weight:600"></div>
+  </div>
+</div>
+
+<!-- CLIENTS -->
+<div id="tab-clients" class="section">
+  <div class="topbar"><div class="topbar-left"><h2>Clients</h2><p id="client-count"></p></div></div>
+  <div class="card">
+    <input class="search-box" id="q" placeholder="🔍  Search by name or phone..." oninput="renderClients()">
+    <div id="client-list"></div>
+  </div>
+</div>
+
+<!-- DUE DATES -->
+<div id="tab-dues" class="section">
+  <div class="topbar"><div class="topbar-left"><h2>All Due Dates</h2><p>Perpetual GST · TDS · ROC calendar across all clients</p></div></div>
+  <div class="card">
+    <div class="pills" id="due-pills">
+      <div class="pill active" onclick="setDF(this,'ALL')">All</div>
+      <div class="pill" onclick="setDF(this,'OVERDUE')">Overdue</div>
+      <div class="pill" onclick="setDF(this,'REMIND')">Due Soon</div>
+      <div class="pill" onclick="setDF(this,'PENDING')">Pending</div>
+      <div class="pill" onclick="setDF(this,'DONE')">Completed</div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Client</th><th>Due Date</th><th>Filing</th><th>Period</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="due-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS & EMAIL -->
+<div id="tab-settings" class="section">
+  <div class="topbar"><div class="topbar-left"><h2>Settings &amp; Integrations</h2><p>One-time setup — system runs autonomously after this</p></div></div>
+
+  <div class="card" style="margin-bottom:16px">
+    <p class="section-title">📧 EmailJS Configuration</p>
+    <div class="alert alert-info" style="margin-bottom:12px">
+      EmailJS sends real emails from this file — <strong>no server needed.</strong>
+      Register free at <a href="https://www.emailjs.com" target="_blank" style="color:var(--blue);font-weight:700">emailjs.com</a> → create a service + email template → paste IDs below.
+      Your EmailJS template must have variables: <code>to_email, to_name, from_name, reply_to, subject, message</code>.
+    </div>
+    <div class="grid3">
+      <div><label class="lbl">EmailJS Public Key</label><input id="ejs-pubkey" placeholder="your_public_key"></div>
+      <div><label class="lbl">Service ID</label><input id="ejs-service" placeholder="service_xxxxxxx"></div>
+      <div><label class="lbl">Template ID</label><input id="ejs-template" placeholder="template_xxxxxxx"></div>
+    </div>
+    <div class="grid2" style="margin-top:0">
+      <div><label class="lbl">Your Name (shown in emails)</label><input id="ca-name" placeholder="CA Ramesh Shah"></div>
+      <div><label class="lbl">Your Email (Reply-to)</label><input id="ca-email" placeholder="ca@yourfirm.com"></div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+      <button class="btn btn-outline" onclick="testEmail()">📨 Send Test Email</button>
+      <div id="settings-msg" style="font-size:13px;font-weight:600"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <p class="section-title">🤖 Claude AI Email Drafting <span class="ai-badge">✨ AI</span></p>
+    <div class="alert alert-purple" style="margin-bottom:12px">
+      When a Claude API key is provided, each reminder email is <strong>individually personalised</strong> using AI — referencing the client's entity type, filing history context, and a professional yet warm tone. Falls back to the standard template if AI is unavailable.
+    </div>
+    <div class="grid2">
+      <div><label class="lbl">Claude API Key (optional)</label><input id="claude-key" type="password" placeholder="sk-ant-..."></div>
+      <div><label class="lbl">AI Tone</label>
+        <select id="ai-tone">
+          <option value="professional">Professional &amp; Formal</option>
+          <option value="friendly" selected>Friendly &amp; Warm</option>
+          <option value="urgent">Urgent &amp; Assertive</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-purple" onclick="testAIEmail()">🤖 Test AI Draft</button>
+      <div id="ai-test-msg" style="font-size:13px;font-weight:600"></div>
+    </div>
+    <div id="ai-preview-wrap" style="display:none;margin-top:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px">AI-Generated Preview:</div>
+      <div class="email-preview" id="ai-preview-body"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <p class="section-title">⚡ Automation Settings</p>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Auto-send reminders (scheduler-triggered)</div>
+        <div class="settings-desc">When enabled, the scheduler automatically sends emails without any manual action. Configure the schedule in the Auto Scheduler tab.</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog-auto" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Use AI to draft personalised emails</div>
+        <div class="settings-desc">Requires Claude API key above. Each client gets a uniquely worded, context-aware reminder email.</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog-ai" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Send WhatsApp reminders</div>
+        <div class="settings-desc">Opens WhatsApp Web links for each due client when visiting the Reminders tab.</div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="tog-wa" onchange="saveSettings()"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Send reminder days before due date</div>
+      </div>
+      <select id="remind-days-setting2" style="width:90px" onchange="syncRemindDays(this)">
+        <option value="3">3 days</option><option value="5" selected>5 days</option>
+        <option value="7">7 days</option><option value="10">10 days</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL LOG -->
+<div id="tab-log" class="section">
+  <div class="topbar"><div class="topbar-left"><h2>Email Log</h2><p>Full history of automated + manual reminders</p></div>
+    <div class="topbar-right">
+      <button class="btn-sm" onclick="exportLog()">⬇ Export CSV</button>
+      <button class="btn-sm" onclick="clearLog()">🗑 Clear Log</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="log-list"><div class="empty">No emails sent yet. Configure EmailJS in Settings first.</div></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ── SCRIPTS ──────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// PERPETUAL DUE-DATE ENGINE
+// Generates compliance dates dynamically for any FY, so the system never
+// expires. Dates are calculated relative to the current date.
+// ══════════════════════════════════════════════════════════════════════════
+
+function buildDuesForFY(fy_start_year){
+  // fy_start_year = calendar year April starts (e.g. 2026 for FY 2026-27)
+  const y = fy_start_year;
+  const Y = y + 1; // end year
+  const fyLabel = `FY ${y}-${String(Y).slice(2)}`;
+  const dues = [];
+
+  // Helper
+  const d = (yr,mo,day,cat,form,period) => ({dt:new Date(yr,mo,day), cat, form, period});
+
+  // Monthly GST cycle (GSTR-1 on 11th, GSTR-3B on 20th, QRMP IFF on 13th)
+  const months = [
+    {yr:y,mo:3,lbl:"Apr "+y}, {yr:y,mo:4,lbl:"May "+y}, {yr:y,mo:5,lbl:"Jun "+y},
+    {yr:y,mo:6,lbl:"Jul "+y}, {yr:y,mo:7,lbl:"Aug "+y}, {yr:y,mo:8,lbl:"Sep "+y},
+    {yr:y,mo:9,lbl:"Oct "+y}, {yr:y,mo:10,lbl:"Nov "+y}, {yr:y,mo:11,lbl:"Dec "+y},
+    {yr:Y,mo:0,lbl:"Jan "+Y}, {yr:Y,mo:1,lbl:"Feb "+Y}, {yr:Y,mo:2,lbl:"Mar "+Y},
+  ];
+
+  months.forEach(({yr,mo,lbl})=>{
+    // TDS payment 7th of next month
+    const nxt = mo===11?{yr:yr+1,mo:0}:{yr,mo:mo+1};
+    dues.push(d(nxt.yr,nxt.mo,7,"TDS","TDS payment",lbl));
+    // GSTR-1 monthly
+    dues.push(d(nxt.yr,nxt.mo,11,"GST","GSTR-1 (Monthly)",lbl));
+    // GSTR-1 / IFF QRMP
+    dues.push(d(nxt.yr,nxt.mo,13,"GST","GSTR-1 / IFF (QRMP)",lbl));
+    // GSTR-3B monthly
+    dues.push(d(nxt.yr,nxt.mo,20,"GST","GSTR-3B (Monthly)",lbl));
+  });
+
+  // Quarterly TDS returns
+  const qtds = [
+    {yr:y, mo:6, day:31, period:"Apr–Jun "+y},   // Q1
+    {yr:y, mo:9, day:31, period:"Jul–Sep "+y},   // Q2
+    {yr:y, mo:12,day:31, period:"Oct–Dec "+y},   // Q3 — adjusted below
+    {yr:Y, mo:4, day:15, period:"Jan–Mar "+Y},   // Q4
+  ];
+  dues.push(d(y,6,31,"TDS","TDS return 24Q/26Q/27Q","Apr–Jun "+y));
+  dues.push(d(y,9,31,"TDS","TDS return 24Q/26Q/27Q","Jul–Sep "+y));
+  dues.push(d(y,12,31,"TDS","TDS return 24Q/26Q/27Q","Oct–Dec "+y));  // Dec 31
+  dues.push(d(Y,4,15,"TDS","TDS return 24Q/26Q/27Q","Jan–Mar "+Y));
+
+  // Quarterly TCS returns (27EQ)
+  dues.push(d(y,6,15,"TDS","TCS return 27EQ","Apr–Jun "+y));
+  dues.push(d(y,9,15,"TDS","TCS return 27EQ","Jul–Sep "+y));
+  dues.push(d(y,12,15,"TDS","TCS return 27EQ","Oct–Dec "+y));
+  dues.push(d(Y,4,15,"TDS","TCS return 27EQ","Jan–Mar "+Y));
+
+  // Quarterly QRMP GSTR-3B
+  const qrmpPeriods = [
+    {yr:y,mo:3,day:22,p:"Jan–Mar "+y},   // Q4 prev FY (already in hard-coded)
+    {yr:y,mo:6,day:22,p:"Apr–Jun "+y},
+    {yr:y,mo:9,day:22,p:"Jul–Sep "+y},
+    {yr:y,mo:12,day:22,p:"Oct–Dec "+y},
+    {yr:Y,mo:3,day:22,p:"Jan–Mar "+Y},
+  ];
+  qrmpPeriods.forEach(({yr,mo,day,p})=>{
+    dues.push(d(yr,mo,day,"GST","GSTR-3B (QRMP Cat-1)",p));
+    dues.push(d(yr,mo,day+2,"GST","GSTR-3B (QRMP Cat-2)",p));
+  });
+
+  // CMP-08 (Composition)
+  dues.push(d(y,6,18,"GST","CMP-08","Apr–Jun "+y));
+  dues.push(d(y,9,18,"GST","CMP-08","Jul–Sep "+y));
+  dues.push(d(y,12,18,"GST","CMP-08","Oct–Dec "+y));
+  dues.push(d(Y,3,18,"GST","CMP-08","Jan–Mar "+Y));
+
+  // GSTR-4 Annual
+  dues.push(d(Y,3,30,"GST","GSTR-4 (Annual)",fyLabel));
+
+  // Annual TDS return Q4
+  dues.push(d(Y,4,31,"TDS","TDS return 24Q/26Q (Annual Q4)",fyLabel));
+
+  // ROC filings
+  dues.push(d(Y,3,30,"ROC","MSME Form I","Oct–Mar "+Y));
+  dues.push(d(y,4,30,"ROC","Form 11 — LLP Annual Return",fyLabel));
+  dues.push(d(y,5,30,"ROC","DPT-3 (Deposits)",fyLabel));
+  dues.push(d(y,7,30,"ROC","MSME Form I","Apr–Sep "+y));
+  dues.push(d(y,8,30,"ROC","DIR-3 KYC",fyLabel));
+  dues.push(d(y,9,29,"ROC","AOC-4 (Pvt Ltd / OPC)",fyLabel));
+  dues.push(d(y,9,30,"ROC","Form 8 — LLP Statement",fyLabel));
+  dues.push(d(y,10,29,"ROC","MGT-7 / MGT-7A (Annual Return)",fyLabel));
+
+  return dues;
+}
+
+// Build a perpetual calendar: current FY + next 2 FYs
+function buildPerpetualCalendar(){
+  const now = new Date();
+  const curFYStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
+  const all = [];
+  for(let i = -1; i <= 2; i++){
+    buildDuesForFY(curFYStart + i).forEach(e => all.push(e));
+  }
+  // Deduplicate by dt+cat+form
+  const seen = new Set();
+  return all.filter(e => {
+    const k = e.dt.getTime()+"_"+e.cat+"_"+e.form;
+    if(seen.has(k)) return false;
+    seen.add(k); return true;
+  }).sort((a,b) => a.dt - b.dt);
+}
+
+const ALL_DUES = buildPerpetualCalendar();
+
+// ══ State ════════════════════════════════════════════════════════════════
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+let clients=[], statuses={}, emailLog=[], settings={}, schedLog=[];
+let dueFilter="ALL", rf=5, editingId=null;
+let schedulerTimer=null, schedulerRunning=false;
+
+document.getElementById("today-lbl").textContent = fmtDate(TODAY);
+
+// ══ Persistence ══════════════════════════════════════════════════════════
+async function load(){
+  const tryGet = k => { try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch{return null;} };
+  clients   = tryGet("ca4_clients")   || [];
+  statuses  = tryGet("ca4_statuses")  || {};
+  emailLog  = tryGet("ca4_log")       || [];
+  settings  = tryGet("ca4_settings")  || {};
+  schedLog  = tryGet("ca4_schedlog")  || [];
+  applySettings();
+  renderAll();
+  if(settings.autoSend && settings.ejsPubKey) startScheduler();
+}
+async function save(){
+  const trySet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
+  trySet("ca4_clients", clients);
+  trySet("ca4_statuses", statuses);
+  trySet("ca4_log", emailLog);
+  trySet("ca4_settings", settings);
+  trySet("ca4_schedlog", schedLog);
+}
+
+// ══ Helpers ═══════════════════════════════════════════════════════════════
+function fmtDate(d){ return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}); }
+function fmtDateTime(d){ return new Date(d).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+function days(d){ return Math.ceil((d-TODAY)/(864e5)); }
+function cleanPhone(p){ return (p||"").replace(/\D/g,"").slice(-10); }
+function todayKey(){ return TODAY.toISOString().slice(0,10); }
+
+function getDues(c){
+  return ALL_DUES.filter(d=>{
+    if(!c.services||!c.services.length) return false;
+    if(d.cat==="GST"){
+      if(!c.services.includes("GST")) return false;
+      const f=d.form.toLowerCase();
+      if(c.gstType==="Composition") return f.includes("cmp-08")||f.includes("gstr-4");
+      if(c.gstType==="QRMP") return f.includes("qrmp")||f.includes("iff")||f.includes("gstr-3b (qrmp")||f.includes("gstr-4");
+      if(c.gstType==="Monthly") return !f.includes("qrmp")&&!f.includes("iff")&&!f.includes("cmp-08")&&!f.includes("gstr-4");
+      return true;
+    }
+    return c.services.includes(d.cat);
+  });
+}
+
+function statusOf(cid,idx,dt){
+  const k=cid+"_"+idx;
+  if(statuses[k]==="done") return "done";
+  if(dt<TODAY) return "overdue";
+  const d=days(dt);
+  if(d>=0&&d<=rf) return "remind";
+  return statuses[k]||"pending";
+}
+async function toggleStatus(cid,idx,dtMs){
+  const dt=new Date(dtMs), k=cid+"_"+idx;
+  statuses[k]=statuses[k]==="done"?"pending":"done";
+  await save(); renderAll();
+}
+function badge(cid,idx,dt){
+  const s=statusOf(cid,idx,dt);
+  const L={done:"✅ Done",overdue:"❗ Overdue",remind:"⏰ Due Soon",pending:"🕐 Pending"};
+  const C={done:"b-done",overdue:"b-overdue",remind:"b-remind",pending:"b-pending"};
+  return `<span class="badge ${C[s]}" onclick="toggleStatus('${cid}',${idx},${dt.getTime()})" style="cursor:pointer">${L[s]}</span>`;
+}
+function catBadge(cat){
+  const c={GST:"b-gst",TDS:"b-tds",ROC:"b-roc"};
+  return `<span class="badge ${c[cat]||''}">${cat}</span>`;
+}
+
+// ══ STANDARD Email content generator ══════════════════════════════════════
+function buildEmailBody(client, dues){
+  const caName  = settings.caName  || "Your CA";
+  const caEmail = settings.caEmail || "";
+  const contact = client.contact || client.name;
+  const dueLines = dues.map(d=>`   • ${d.form} (${d.period}) — Due: ${fmtDate(d.dt)}`).join("\n");
+  return `Dear ${contact},
+
+Greetings from ${caName}'s office!
+
+This is a friendly reminder that the following statutory compliance(s) are due within the next few days:
+
+${dueLines}
+
+Action Required:
+Please arrange and share the necessary documents / data at the earliest so that we can file on time and avoid any interest, penalty or late fees.
+
+For any clarifications, feel free to call or WhatsApp us directly.
+
+Warm regards,
+${caName}
+Chartered Accountant
+${caEmail ? "Email: " + caEmail : ""}
+
+──────────────────────────────────────────────────────
+This is an automated reminder. Please do not reply if sent from a no-reply address.`;
+}
+
+function buildWAMsg(client, dues){
+  const caName = settings.caName || "Your CA";
+  const contact = client.contact || client.name;
+  const dueLines = dues.map(d=>`• ${d.form} (${d.period}) — ${fmtDate(d.dt)}`).join("\n");
+  return `Dear ${contact},\n\nThis is a reminder from ${caName}'s office.\n\nUpcoming compliance due dates:\n${dueLines}\n\nKindly provide the required documents at the earliest.\n\nRegards,\n${caName}, CA`;
+}
+
+// ══ AI EMAIL DRAFTING via Claude API ═══════════════════════════════════════
+async function draftEmailWithAI(client, dues){
+  if(!settings.claudeKey) return null;
+  const caName = settings.caName || "Your CA";
+  const contact = client.contact || client.name;
+  const tone = settings.aiTone || "friendly";
+  const toneDesc = {
+    professional:"professional and formal, using polished business language",
+    friendly:"warm and friendly while remaining professional",
+    urgent:"firm and urgent, emphasising consequences of delay"
+  }[tone];
+  const dueLines = dues.map(d=>`- ${d.form} (${d.period}): due ${fmtDate(d.dt)}`).join("\n");
+
+  const prompt = `You are writing a compliance reminder email on behalf of ${caName}, a Chartered Accountant in India.
+
+Client details:
+- Name: ${client.name}
+- Contact person: ${contact}
+- Entity type: ${client.entity || "Business"}
+- GST filing type: ${client.gstType || "N/A"}
+
+Upcoming compliance deadlines:
+${dueLines}
+
+Write a ${toneDesc} reminder email. The email should:
+1. Address the contact person by name
+2. Briefly mention all the specific compliance items and their exact due dates
+3. Clearly request the client to share required documents/data
+4. Mention consequences of delay (interest, penalty, late fees) appropriately
+5. Sign off as ${caName}, Chartered Accountant
+6. Be concise (under 200 words)
+7. End with: "This is an automated reminder from your CA's compliance system."
+
+Write only the email body — no subject line, no markdown, plain text only.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await response.json();
+    if(data.content && data.content[0] && data.content[0].text){
+      return data.content[0].text.trim();
+    }
+    return null;
+  } catch(e) {
+    console.warn("AI draft failed:", e);
+    return null;
+  }
+}
+
+// ══ EmailJS Send ═══════════════════════════════════════════════════════════
+function initEmailJS(){
+  if(settings.ejsPubKey && window.emailjs) emailjs.init({publicKey: settings.ejsPubKey});
+}
+
+async function sendEmail(client, dues, isAuto, useAI){
+  if(!settings.ejsPubKey||!settings.ejsService||!settings.ejsTemplate)
+    return {ok:false,msg:"EmailJS not configured"};
+  if(!client.email) return {ok:false,msg:"No email for "+client.name};
+  initEmailJS();
+
+  let body = buildEmailBody(client, dues);
+  let aiUsed = false;
+  if(useAI && settings.useAI && settings.claudeKey){
+    const aiBody = await draftEmailWithAI(client, dues);
+    if(aiBody){ body = aiBody; aiUsed = true; }
+  }
+
+  const subject = `Compliance Reminder — ${dues.map(d=>d.form).join(", ")} due soon`;
+  try{
+    await emailjs.send(settings.ejsService, settings.ejsTemplate, {
+      to_email:  client.email,
+      to_name:   client.contact || client.name,
+      from_name: settings.caName || "Your CA",
+      reply_to:  settings.caEmail || "",
+      subject:   subject,
+      message:   body,
+    });
+    const entry={
+      ts: new Date().toISOString(),
+      client: client.name,
+      email: client.email,
+      dues: dues.map(d=>d.form).join(", "),
+      mode: isAuto?"Auto":"Manual",
+      aiUsed,
+      status:"sent"
+    };
+    emailLog.unshift(entry);
+    if(emailLog.length>500) emailLog=emailLog.slice(0,500);
+    await save();
+    return {ok:true, aiUsed};
+  } catch(err){
+    const entry={
+      ts: new Date().toISOString(),
+      client: client.name,
+      email: client.email,
+      dues: dues.map(d=>d.form).join(", "),
+      mode: isAuto?"Auto":"Manual",
+      aiUsed: false,
+      status:"failed",
+      err: err.text||err.message||JSON.stringify(err)
+    };
+    emailLog.unshift(entry);
+    await save();
+    return {ok:false,msg:err.text||"Send failed"};
+  }
+}
+
+function getReminderItems(days_){
+  const cutoff=new Date(TODAY); cutoff.setDate(cutoff.getDate()+days_);
+  const items=[];
+  clients.forEach(c=>{
+    const dues=[];
+    getDues(c).forEach((d,i_)=>{
+      const idx=ALL_DUES.indexOf(d);
+      const s=statusOf(c.id,idx,d.dt);
+      if(s!=="done"&&d.dt>=TODAY&&d.dt<=cutoff) dues.push({d,idx});
+    });
+    if(dues.length) items.push({c,dues});
+  });
+  return items;
+}
+
+// ══ PERPETUAL SCHEDULER ════════════════════════════════════════════════════
+// The scheduler checks every N seconds (configurable) whether the current
+// time matches the configured daily send time. When it does, it fires the
+// auto-send pipeline and logs the run. This makes the system perpetual —
+// it will keep firing every day at the configured time as long as the tab
+// is open (or the page is pinged by an uptime monitor).
+
+function startScheduler(){
+  if(schedulerRunning) return;
+  schedulerRunning = true;
+  updateSchedUI();
+  const interval = parseInt(settings.schedInterval||300) * 1000;
+  schedulerTimer = setInterval(schedulerTick, interval);
+  schedulerTick(); // run immediately on start too
+}
+
+function stopScheduler(){
+  if(schedulerTimer){ clearInterval(schedulerTimer); schedulerTimer=null; }
+  schedulerRunning = false;
+  updateSchedUI();
+}
+
+function toggleScheduler(){
+  if(schedulerRunning) stopScheduler();
+  else startScheduler();
+}
+
+function updateSchedUI(){
+  const btn = document.getElementById("sched-toggle-btn");
+  const bar = document.getElementById("sched-live-bar");
+  const pill = document.getElementById("sched-footer-pill");
+  if(schedulerRunning){
+    btn.textContent = "⏹ Stop Scheduler";
+    btn.className = "btn btn-danger";
+    bar.style.display = "flex";
+    pill.textContent = "● Scheduler ON"; pill.className = "scheduler-pill on";
+    document.getElementById("auto-status-txt").textContent = "ON";
+  } else {
+    btn.textContent = "▶ Start Scheduler";
+    btn.className = "btn btn-success";
+    bar.style.display = "none";
+    pill.textContent = "● Scheduler OFF"; pill.className = "scheduler-pill off";
+    document.getElementById("auto-status-txt").textContent = "OFF";
+  }
+  renderSchedLog();
+}
+
+async function schedulerTick(){
+  const now = new Date();
+  const hhmm = now.getHours().toString().padStart(2,"0")+":"+now.getMinutes().toString().padStart(2,"0");
+  const targetTime = settings.schedTime || "09:00";
+  const tkKey = todayKey();
+
+  // Update "last check" UI
+  const lastRunEl = document.getElementById("sched-last-run");
+  if(lastRunEl) lastRunEl.textContent = "Last check: "+fmtDateTime(now);
+
+  // Compute next run time
+  const [th,tm] = targetTime.split(":").map(Number);
+  const nextRun = new Date(now); nextRun.setHours(th,tm,0,0);
+  if(nextRun <= now) nextRun.setDate(nextRun.getDate()+1);
+  const nextRunEl = document.getElementById("sched-next-run");
+  if(nextRunEl) nextRunEl.textContent = "Next: "+fmtDateTime(nextRun);
+
+  // Check if it's time to send (within 5-min window of target)
+  const diffMin = Math.abs((now.getHours()*60+now.getMinutes()) - (th*60+tm));
+  if(diffMin > 5) return; // not yet
+
+  // Check if already sent today
+  const alreadySentToday = schedLog.some(l => l.date === tkKey && l.status==="ok");
+  if(alreadySentToday) return;
+
+  // Run the auto-send pipeline
+  await runAutoSendPipeline(true);
+}
+
+async function runAutoSendPipeline(isScheduled){
+  if(!settings.ejsPubKey || !settings.ejsService || !settings.ejsTemplate) return;
+  const rdSetting = parseInt(settings.remindDays||5);
+  const items = getReminderItems(rdSetting);
+  const tkKey = todayKey();
+  let sent=0, failed=0, skipped=0;
+
+  for(const {c,dues} of items){
+    const alreadySent = emailLog.some(l=>l.ts.startsWith(tkKey)&&l.client===c.name&&l.status==="sent");
+    if(alreadySent){ skipped++; continue; }
+    const res = await sendEmail(c, dues.map(x=>x.d), true, true);
+    if(res.ok) sent++; else failed++;
+    await new Promise(r=>setTimeout(r,1200)); // throttle
+  }
+
+  const logEntry = {
+    date: tkKey,
+    ts: new Date().toISOString(),
+    scheduled: isScheduled,
+    sent, failed, skipped,
+    status: "ok"
+  };
+  schedLog.unshift(logEntry);
+  if(schedLog.length > 60) schedLog = schedLog.slice(0,60);
+  await save();
+
+  if(sent > 0){
+    const banner=document.getElementById("auto-banner");
+    banner.style.display="block";
+    banner.innerHTML=`<div class="auto-status"><span class="dot-live"></span> ${isScheduled?"Scheduler":"Manual"}: sent ${sent} reminder email(s) today 🎉${failed?` (${failed} failed)`:""}</div>`;
+  }
+  renderAll();
+}
+
+async function sendAllAuto(){
+  if(!settings.ejsPubKey){ alert("Please configure EmailJS in Settings first."); goTab("settings"); return; }
+  const items=getReminderItems(rf);
+  if(!items.length){ alert("No clients with dues in next "+rf+" days."); return; }
+  const btn=event.target; btn.disabled=true; btn.textContent="Sending…";
+  let ok=0,fail=0;
+  for(const {c,dues} of items){
+    if(!c.email){fail++;continue;}
+    const res=await sendEmail(c,dues.map(x=>x.d),false,false);
+    if(res.ok) ok++; else fail++;
+    await new Promise(r=>setTimeout(r,800));
+  }
+  btn.disabled=false; btn.textContent="📧 Send All Emails Now";
+  alert(`Done! Sent: ${ok}, Failed/No-email: ${fail}`);
+  renderAll();
+}
+
+async function sendAllAI(){
+  if(!settings.ejsPubKey){ alert("Configure EmailJS in Settings."); goTab("settings"); return; }
+  if(!settings.claudeKey){ alert("Add a Claude API key in Settings to use AI drafting."); goTab("settings"); return; }
+  const items=getReminderItems(rf);
+  if(!items.length){ alert("No clients with dues in next "+rf+" days."); return; }
+  const btn=event.target; btn.disabled=true; btn.textContent="AI drafting…";
+  let ok=0,fail=0;
+  for(const {c,dues} of items){
+    if(!c.email){fail++;continue;}
+    const res=await sendEmail(c,dues.map(x=>x.d),false,true);
+    if(res.ok) ok++; else fail++;
+    await new Promise(r=>setTimeout(r,1500));
+  }
+  btn.disabled=false; btn.textContent="🤖 AI Draft & Send All";
+  alert(`Done! Sent: ${ok} (AI-personalised), Failed/No-email: ${fail}`);
+  renderAll();
+}
+
+// ══ Render ════════════════════════════════════════════════════════════════
+function renderAll(){
+  renderDashboard(); renderReminders(); renderClients();
+  renderDues(); renderLog(); renderSchedLog();
+  document.getElementById("client-count").textContent=clients.length+" client(s) registered";
+}
+
+function renderDashboard(){
+  let total=0,ov=0,done=0,rem=0;
+  clients.forEach(c=>getDues(c).forEach(d=>{
+    const idx=ALL_DUES.indexOf(d); total++;
+    const s=statusOf(c.id,idx,d.dt);
+    if(s==="done") done++;
+    else if(s==="overdue") ov++;
+    else if(s==="remind") rem++;
+  }));
+  document.getElementById("metrics").innerHTML=`
+    <div class="metric blue"><div class="metric-icon">👥</div><div class="metric-val">${clients.length}</div><div class="metric-lbl">Clients</div><div class="metric-sub">${total} compliances tracked</div></div>
+    <div class="metric gold"><div class="metric-icon">⏰</div><div class="metric-val">${rem}</div><div class="metric-lbl">Due Soon</div><div class="metric-sub">Within ${rf} days</div></div>
+    <div class="metric red"><div class="metric-icon">❗</div><div class="metric-val">${ov}</div><div class="metric-lbl">Overdue</div><div class="metric-sub">Immediate action</div></div>
+    <div class="metric green"><div class="metric-icon">✅</div><div class="metric-val">${done}</div><div class="metric-lbl">Completed</div><div class="metric-sub">Filed on time</div></div>
+  `;
+  const SOON=new Date(TODAY); SOON.setDate(SOON.getDate()+30);
+  const upcoming=[];
+  clients.forEach(c=>getDues(c).forEach(d=>{
+    const idx=ALL_DUES.indexOf(d); const s=statusOf(c.id,idx,d.dt);
+    if(s!=="done"&&d.dt>=TODAY&&d.dt<=SOON) upcoming.push({c,d,idx});
+  }));
+  upcoming.sort((a,b)=>a.d.dt-b.d.dt);
+  const rows=upcoming.slice(0,15).map(({c,d,idx})=>
+    `<tr><td style="font-weight:600">${c.name}</td><td>${fmtDate(d.dt)}</td><td>${d.form}</td><td style="color:var(--muted)">${d.period}</td><td>${catBadge(d.cat)}</td><td>${badge(c.id,idx,d.dt)}</td></tr>`
+  ).join("");
+  document.getElementById("upcoming-card").innerHTML=upcoming.length
+    ?`<p style="font-weight:700;color:var(--navy);margin-bottom:12px">📅 Upcoming — Next 30 Days</p><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Client</th><th>Due Date</th><th>Filing</th><th>Period</th><th>Category</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    :`<div class="empty">${clients.length?"All clear — no pending dues in next 30 days 🎉":"Import clients from Excel or add manually to get started."}</div>`;
+  // Scheduler status on dashboard
+  const sdEl = document.getElementById("sched-status-dash");
+  if(schedulerRunning){
+    sdEl.style.display="block";
+    sdEl.innerHTML=`<div class="sched-bar" style="margin-bottom:16px"><span class="dot-sched" style="display:inline-block;margin-right:4px"></span><span class="sched-bar-title">🤖 Auto Scheduler is RUNNING — emails fire daily at ${settings.schedTime||"09:00"}</span><span class="next-run-chip">Next: ${document.getElementById("sched-next-run")?.textContent||"—"}</span></div>`;
+  } else sdEl.style.display="none";
+}
+
+function renderReminders(){
+  const items=getReminderItems(rf);
+  const el=document.getElementById("remind-list");
+  if(!items.length){el.innerHTML=`<div class="empty">No pending dues in the next ${rf} days 🎉</div>`;return;}
+  el.innerHTML=items.map(({c,dues})=>{
+    const dueRows=dues.map(({d,idx})=>`<tr><td>${fmtDate(d.dt)}</td><td>${d.form}</td><td style="color:var(--muted)">${d.period}</td><td>${catBadge(d.cat)}</td><td><span class="badge b-remind">⏰ ${days(d.dt)}d left</span></td></tr>`).join("");
+    const waLink=c.phone?`<button class="btn-wa" onclick="window.open('${waUrl(c,dues.map(x=>x.d))}','_blank')">📱 WhatsApp</button>`:"";
+    const mailLink=c.email?`<button class="btn-mail" onclick="sendSingleEmail('${c.id}')">📧 Email</button>`:"<span style='font-size:12px;color:var(--muted)'>No email</span>";
+    const aiLink=c.email&&settings.claudeKey?`<button class="btn-ai" onclick="sendSingleAI('${c.id}')">🤖 AI Email</button>`:"";
+    return `<div class="remind-card">
+      <div class="remind-card-head">
+        <div><div class="remind-card-name">${c.name}</div>
+        <div class="remind-card-meta">${c.entity||""} ${c.phone?"· 📱 "+c.phone:""} ${c.email?"· ✉️ "+c.email:""}</div></div>
+        <div class="action-row">${waLink}${mailLink}${aiLink}</div>
+      </div>
+      <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Due Date</th><th>Filing</th><th>Period</th><th>Category</th><th>Days Left</th></tr></thead><tbody>${dueRows}</tbody></table></div>
+    </div>`;
+  }).join("");
+}
+
+function waUrl(c,dues){
+  const msg=buildWAMsg(c,dues);
+  return "https://wa.me/91"+cleanPhone(c.phone)+"?text="+encodeURIComponent(msg);
+}
+
+async function sendSingleEmail(cid){
+  const c=clients.find(x=>x.id===cid); if(!c) return;
+  if(!settings.ejsPubKey){alert("Configure EmailJS in Settings.");goTab("settings");return;}
+  const cutoff=new Date(TODAY); cutoff.setDate(cutoff.getDate()+rf);
+  const dues=getDues(c).filter(d=>{const s=statusOf(c.id,ALL_DUES.indexOf(d),d.dt);return s!=="done"&&d.dt>=TODAY&&d.dt<=cutoff;});
+  if(!dues.length){alert("No pending dues for "+c.name+" in next "+rf+" days.");return;}
+  const res=await sendEmail(c,dues,false,false);
+  alert(res.ok?"✅ Email sent to "+c.email:"❌ Failed: "+(res.msg||"unknown error"));
+  renderAll();
+}
+
+async function sendSingleAI(cid){
+  const c=clients.find(x=>x.id===cid); if(!c) return;
+  if(!settings.ejsPubKey||!settings.claudeKey){alert("Configure EmailJS + Claude API key in Settings.");return;}
+  const cutoff=new Date(TODAY); cutoff.setDate(cutoff.getDate()+rf);
+  const dues=getDues(c).filter(d=>{const s=statusOf(c.id,ALL_DUES.indexOf(d),d.dt);return s!=="done"&&d.dt>=TODAY&&d.dt<=cutoff;});
+  if(!dues.length){alert("No pending dues for "+c.name+" in next "+rf+" days.");return;}
+  const res=await sendEmail(c,dues,false,true);
+  alert(res.ok?`✅ AI-personalised email sent to ${c.email}${res.aiUsed?" (AI drafted)":""}` :"❌ Failed: "+(res.msg||"unknown error"));
+  renderAll();
+}
+
+function renderClients(){
+  const q=(document.getElementById("q")||{}).value||"";
+  const filtered=clients.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.phone&&c.phone.includes(q)));
+  const el=document.getElementById("client-list");
+  if(!filtered.length){el.innerHTML=`<div class="empty">${clients.length?"No match.":"No clients yet."}</div>`;return;}
+  el.innerHTML=filtered.map(c=>{
+    const tags=(c.services||[]).map(s=>{
+      const cls={GST:"b-gst",TDS:"b-tds",ROC:"b-roc"}[s]||"";
+      return `<span class="svc-tag ${cls}">${s}</span>`;
+    }).join("");
+    return `<div class="client-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div class="client-name">${c.name}</div>
+          <div class="client-meta">${c.entity||""} ${c.phone?"· "+c.phone:""} ${c.email?"· "+c.email:""} ${c.pan?"· PAN: "+c.pan:""}</div>
+          <div>${tags}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-sm" onclick="editClient('${c.id}')">Edit</button>
+          <button class="btn-danger" onclick="delClient('${c.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderDues(){
+  const tbody=document.getElementById("due-body"); if(!tbody) return;
+  if(!clients.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">No clients yet.</td></tr>`;return;}
+  const rows=[];
+  clients.forEach(c=>getDues(c).forEach(d=>{
+    const idx=ALL_DUES.indexOf(d); const s=statusOf(c.id,idx,d.dt);
+    if(dueFilter!=="ALL"&&s.toUpperCase()!==dueFilter) return;
+    rows.push({c,d,idx,s});
+  }));
+  rows.sort((a,b)=>a.d.dt-b.d.dt);
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="7" class="empty">No entries for this filter.</td></tr>`;return;}
+  tbody.innerHTML=rows.map(({c,d,idx,s})=>{
+    const waLink=c.phone?`<button class="btn-wa" style="padding:3px 8px;font-size:11px" onclick="window.open('${waUrl(c,[d])}','_blank')">📱</button>`:"";
+    const mailLink=c.email?`<button class="btn-mail" style="padding:3px 8px;font-size:11px" onclick="sendSingleEmail('${c.id}')">📧</button>`:"";
+    return `<tr><td style="font-weight:600">${c.name}</td><td>${fmtDate(d.dt)}</td><td>${d.form}</td><td style="color:var(--muted)">${d.period}</td><td>${catBadge(d.cat)}</td><td>${badge(c.id,idx,d.dt)}</td><td style="white-space:nowrap">${waLink}${mailLink}</td></tr>`;
+  }).join("");
+}
+
+function renderLog(){
+  const el=document.getElementById("log-list"); if(!el) return;
+  if(!emailLog.length){el.innerHTML=`<div class="empty">No emails sent yet.</div>`;return;}
+  el.innerHTML=emailLog.slice(0,100).map(l=>{
+    const ds=fmtDateTime(l.ts);
+    const aiTag=l.aiUsed?`<span class="ai-badge" style="margin-left:4px">✨ AI</span>`:"";
+    return `<div class="log-item">
+      <div class="log-dot ${l.status}"></div>
+      <div style="flex:1">
+        <span style="font-weight:600">${l.client}</span> — ${l.email} ${aiTag}<br>
+        <span style="font-size:11px;color:var(--muted)">${l.dues} | ${l.mode} | ${ds}</span>
+        ${l.err?`<br><span style="font-size:11px;color:var(--red)">Error: ${l.err}</span>`:""}
+      </div>
+      <div><span class="badge ${l.status==="sent"?"b-done":"b-overdue"}">${l.status==="sent"?"✅ Sent":"❌ Failed"}</span></div>
+    </div>`;
+  }).join("");
+}
+
+function renderSchedLog(){
+  const el=document.getElementById("sched-log-list"); if(!el) return;
+  if(!schedLog.length){el.innerHTML=`<div class="empty">No scheduler runs yet.</div>`;return;}
+  el.innerHTML=schedLog.slice(0,20).map(l=>{
+    return `<div class="log-item">
+      <div class="log-dot ${l.status==="ok"?"sent":"failed"}"></div>
+      <div style="flex:1">
+        <span style="font-weight:600">${l.scheduled?"🤖 Scheduled":"👆 Manual"} Run — ${l.date}</span><br>
+        <span style="font-size:11px;color:var(--muted)">Sent: ${l.sent} | Failed: ${l.failed} | Skipped (already sent): ${l.skipped} | ${fmtDateTime(l.ts)}</span>
+      </div>
+      <div><span class="badge ${l.status==="ok"?"b-done":"b-overdue"}">${l.status==="ok"?"✅ OK":"❌ Error"}</span></div>
+    </div>`;
+  }).join("");
+}
+
+// ══ Settings ══════════════════════════════════════════════════════════════
+function applySettings(){
+  document.getElementById("ejs-pubkey").value   = settings.ejsPubKey   || "";
+  document.getElementById("ejs-service").value  = settings.ejsService  || "";
+  document.getElementById("ejs-template").value = settings.ejsTemplate || "";
+  document.getElementById("ca-name").value       = settings.caName      || "";
+  document.getElementById("ca-email").value      = settings.caEmail     || "";
+  document.getElementById("claude-key").value    = settings.claudeKey   || "";
+  document.getElementById("ai-tone").value       = settings.aiTone      || "friendly";
+  document.getElementById("tog-auto").checked    = !!settings.autoSend;
+  document.getElementById("tog-ai").checked      = !!settings.useAI;
+  document.getElementById("tog-wa").checked      = !!settings.waRemind;
+  document.getElementById("remind-days-setting").value  = settings.remindDays || "5";
+  document.getElementById("remind-days-setting2").value = settings.remindDays || "5";
+  document.getElementById("sched-time").value    = settings.schedTime   || "09:00";
+  document.getElementById("sched-interval").value= settings.schedInterval|| "300";
+  rf = parseInt(settings.remindDays||5);
+}
+
+async function saveSettings(){
+  settings.ejsPubKey    = document.getElementById("ejs-pubkey").value.trim();
+  settings.ejsService   = document.getElementById("ejs-service").value.trim();
+  settings.ejsTemplate  = document.getElementById("ejs-template").value.trim();
+  settings.caName       = document.getElementById("ca-name").value.trim();
+  settings.caEmail      = document.getElementById("ca-email").value.trim();
+  settings.claudeKey    = document.getElementById("claude-key").value.trim();
+  settings.aiTone       = document.getElementById("ai-tone").value;
+  settings.autoSend     = document.getElementById("tog-auto").checked;
+  settings.useAI        = document.getElementById("tog-ai").checked;
+  settings.waRemind     = document.getElementById("tog-wa").checked;
+  settings.remindDays   = document.getElementById("remind-days-setting2").value;
+  settings.schedTime    = document.getElementById("sched-time").value;
+  settings.schedInterval= document.getElementById("sched-interval").value;
+  rf = parseInt(settings.remindDays||5);
+  document.getElementById("remind-days-setting").value  = settings.remindDays;
+  document.getElementById("remind-days-setting2").value = settings.remindDays;
+  await save();
+  const msg=document.getElementById("settings-msg");
+  msg.style.color="var(--green)"; msg.textContent="✅ Settings saved!";
+  setTimeout(()=>msg.textContent="",2500);
+  initEmailJS();
+  if(settings.autoSend && settings.ejsPubKey) startScheduler();
+  else stopScheduler();
+  renderAll();
+}
+
+async function saveSchedSettings(){
+  settings.schedTime = document.getElementById("sched-time").value;
+  settings.schedInterval = document.getElementById("sched-interval").value;
+  await save();
+  if(schedulerRunning){ stopScheduler(); startScheduler(); }
+}
+
+function syncRemindDays(el){
+  document.getElementById("remind-days-setting").value = el.value;
+  saveSettings();
+}
+
+async function testEmail(){
+  if(!settings.ejsPubKey){alert("Enter EmailJS details first.");return;}
+  if(!settings.caEmail){alert("Enter your email as the test recipient.");return;}
+  const fakeClient={name:"TEST CLIENT",contact:"Test Contact",email:settings.caEmail,entity:"Pvt Ltd",gstType:"Monthly"};
+  const fakeDues=[{form:"GSTR-1 (Monthly)",period:"Test Period",dt:new Date(TODAY.getTime()+5*864e5),cat:"GST"}];
+  const msg=document.getElementById("settings-msg");
+  msg.style.color="var(--muted)"; msg.textContent="Sending test…";
+  initEmailJS();
+  const res=await sendEmail(fakeClient,fakeDues,false,false);
+  if(res.ok){ msg.style.color="var(--green)"; msg.textContent="✅ Test email sent to "+settings.caEmail; }
+  else { msg.style.color="var(--red)"; msg.textContent="❌ Failed: "+(res.msg); }
+}
+
+async function testAIEmail(){
+  if(!settings.claudeKey){
+    document.getElementById("ai-test-msg").textContent="❌ Enter Claude API key first.";
+    document.getElementById("ai-test-msg").style.color="var(--red)"; return;
+  }
+  const msg=document.getElementById("ai-test-msg");
+  msg.style.color="var(--muted)"; msg.textContent="Drafting with AI…";
+  const fakeClient={name:"M/s Sample Traders Pvt Ltd",contact:"Ramesh Kumar",email:"test@example.com",entity:"Pvt Ltd",gstType:"Monthly"};
+  const fakeDues=[
+    {form:"GSTR-1 (Monthly)",period:"Apr 2026",dt:new Date(TODAY.getTime()+5*864e5),cat:"GST"},
+    {form:"TDS payment",period:"Mar 2026",dt:new Date(TODAY.getTime()+7*864e5),cat:"TDS"}
+  ];
+  const body = await draftEmailWithAI(fakeClient, fakeDues);
+  if(body){
+    msg.style.color="var(--green)"; msg.textContent="✅ AI draft ready!";
+    document.getElementById("ai-preview-wrap").style.display="block";
+    document.getElementById("ai-preview-body").textContent=body;
+  } else {
+    msg.style.color="var(--red)"; msg.textContent="❌ AI draft failed. Check API key.";
+  }
+}
+
+async function clearLog(){
+  if(!confirm("Clear all email logs?")) return;
+  emailLog=[]; await save(); renderLog();
+}
+
+function exportLog(){
+  if(!emailLog.length){alert("No logs to export.");return;}
+  const headers=["Timestamp","Client","Email","Dues","Mode","AI Used","Status","Error"];
+  const rows=emailLog.map(l=>[l.ts,l.client,l.email,l.dues,l.mode,l.aiUsed?"Yes":"No",l.status,l.err||""].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(","));
+  const csv="data:text/csv;charset=utf-8,"+encodeURIComponent([headers.join(","),...rows].join("\n"));
+  const a=document.createElement("a"); a.href=csv; a.download="ca_email_log_"+todayKey()+".csv"; a.click();
+}
+
+// ══ Add / Edit Client ══════════════════════════════════════════════════════
+function toggleCb(inp){ inp.closest("label").classList.toggle("checked", inp.checked); }
+function getSvcs(){ return [...document.querySelectorAll(".svc-row .svc-cb input:checked")].map(x=>x.value); }
+
+async function saveClient(){
+  const name=document.getElementById("c-name").value.trim();
+  const phone=document.getElementById("c-phone").value.trim();
+  const email=document.getElementById("c-email").value.trim();
+  if(!name){showAddMsg("Enter client name.","red");return;}
+  if(!phone){showAddMsg("Enter phone number.","red");return;}
+  const svcs=getSvcs();
+  if(!svcs.length){showAddMsg("Select at least one service.","red");return;}
+  const c={
+    id:editingId||Date.now().toString()+(Math.random()*999|0),
+    name, contact:document.getElementById("c-contact").value.trim(),
+    phone, email,
+    entity:document.getElementById("c-entity").value,
+    gstType:document.getElementById("c-gsttype").value,
+    pan:document.getElementById("c-pan").value.trim(), services:svcs
+  };
+  if(editingId){ const i=clients.findIndex(x=>x.id===editingId); if(i>-1) clients[i]=c; editingId=null; }
+  else clients.push(c);
+  await save(); clearForm(); showAddMsg("Client saved ✓","green");
+  document.getElementById("add-title").textContent="Add Client";
+  document.getElementById("cancel-btn").style.display="none";
+  renderAll();
+}
+
+function clearForm(){
+  ["c-name","c-contact","c-phone","c-email","c-pan"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("c-entity").value="Individual";
+  document.getElementById("c-gsttype").value="";
+  document.querySelectorAll(".svc-row .svc-cb").forEach(l=>{l.querySelector("input").checked=false;l.classList.remove("checked");});
+}
+function cancelEdit(){ editingId=null; clearForm(); document.getElementById("add-title").textContent="Add Client"; document.getElementById("cancel-btn").style.display="none"; }
+function showAddMsg(m,c){ const el=document.getElementById("add-msg"); el.textContent=m; el.style.color=c==="red"?"var(--red)":"var(--green)"; setTimeout(()=>el.textContent="",3000); }
+
+function editClient(id){
+  const c=clients.find(x=>x.id===id); if(!c) return;
+  editingId=id;
+  document.getElementById("c-name").value=c.name;
+  document.getElementById("c-contact").value=c.contact||"";
+  document.getElementById("c-phone").value=c.phone||"";
+  document.getElementById("c-email").value=c.email||"";
+  document.getElementById("c-pan").value=c.pan||"";
+  document.getElementById("c-entity").value=c.entity||"Individual";
+  document.getElementById("c-gsttype").value=c.gstType||"";
+  document.querySelectorAll(".svc-row .svc-cb").forEach(l=>{
+    const v=l.querySelector("input").value;
+    const chk=(c.services||[]).includes(v);
+    l.querySelector("input").checked=chk; l.classList.toggle("checked",chk);
+  });
+  document.getElementById("add-title").textContent="Edit: "+c.name;
+  document.getElementById("cancel-btn").style.display="inline-block";
+  goTab("add");
+}
+
+async function delClient(id){ if(!confirm("Delete this client?")) return; clients=clients.filter(c=>c.id!==id); await save(); renderAll(); }
+
+// ══ Excel Import ═══════════════════════════════════════════════════════════
+async function handleXL(e){
+  const file=e.target.files[0]; if(!file) return;
+  document.getElementById("import-msg").textContent="Reading…";
+  document.getElementById("pb-wrap").style.display="block";
+  document.getElementById("pb-fill").style.width="20%";
+  try{
+    const buf=await file.arrayBuffer();
+    document.getElementById("pb-fill").style.width="55%";
+    const JSZip=await loadJSZip();
+    const zip=await JSZip.loadAsync(buf);
+    document.getElementById("pb-fill").style.width="75%";
+    let ss=[];
+    const ssf=zip.file("xl/sharedStrings.xml");
+    if(ssf){const xml=await ssf.async("string");ss=parseSharedStrings(xml);}
+    const wbXml=await zip.file("xl/workbook.xml").async("string");
+    const sheetDefs=parseWBSheets(wbXml);
+    const sheets={};
+    for(const def of sheetDefs){
+      const f=zip.file(`xl/worksheets/${def.file}`)||zip.file(`xl/worksheets/sheet${def.id}.xml`);
+      if(!f) continue;
+      sheets[def.name]=parseWS(await f.async("string"),ss);
+    }
+    document.getElementById("pb-fill").style.width="95%";
+    const sheet=sheets["Clients"]||sheets[Object.keys(sheets)[0]];
+    if(!sheet) throw new Error("Cannot find 'Clients' sheet.");
+    const imported=parseClientSheet(sheet);
+    if(!imported.length) throw new Error("No valid client rows found. Check template.");
+    let added=0,updated=0;
+    imported.forEach(ic=>{
+      const ex=clients.find(c=>c.name.toLowerCase()===ic.name.toLowerCase());
+      if(ex){Object.assign(ex,ic);updated++;}else{clients.push(ic);added++;}
+    });
+    await save(); renderAll();
+    document.getElementById("import-msg").innerHTML=`<span style="color:var(--green);font-weight:700">✅ Import complete! ${added} added, ${updated} updated.</span>`;
+    showPreview(imported);
+    document.getElementById("pb-fill").style.width="100%";
+  }catch(err){
+    document.getElementById("import-msg").innerHTML=`<span style="color:var(--red)">❌ ${err.message}</span>`;
+  }
+  setTimeout(()=>document.getElementById("pb-wrap").style.display="none",600);
+}
+
+function showPreview(imported){
+  const rows=imported.slice(0,10).map(c=>
+    `<tr><td style="font-weight:600">${c.name}</td><td>${c.phone}</td><td>${c.email||"-"}</td><td>${c.entity}</td><td>${(c.services||[]).join(", ")}</td></tr>`
+  ).join("");
+  document.getElementById("import-preview").innerHTML=`
+    <p style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--navy)">Preview (first ${Math.min(10,imported.length)} rows)</p>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Client Name</th><th>Phone</th><th>Email</th><th>Entity</th><th>Services</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function parseSharedStrings(xml){
+  const res=[];const re=/<si>([\s\S]*?)<\/si>/g;let m;
+  while((m=re.exec(xml))!==null){
+    res.push(m[1].replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&apos;/g,"'").replace(/&quot;/g,'"'));
+  }return res;
+}
+function parseWBSheets(xml){
+  const res=[];
+  const names=[...xml.matchAll(/name="([^"]*)"/g)].map(x=>x[1]).filter(n=>!["sheets","workbook"].includes(n.toLowerCase()));
+  names.forEach((name,i)=>res.push({name,file:`sheet${i+1}.xml`,id:i+1}));
+  return res;
+}
+function colIdx(col){let n=0;for(let i=0;i<col.length;i++) n=n*26+(col.charCodeAt(i)-64);return n-1;}
+function parseWS(xml,ss){
+  const rows=[];const re=/<row[^>]*>([\s\S]*?)<\/row>/g;let rm;
+  while((rm=re.exec(xml))!==null){
+    const cells={};const ce=/<c r="([^"]+)"(?:[^>]* t="([^"]*)")?[^>]*>(?:[\s\S]*?<v>([\s\S]*?)<\/v>)?[\s\S]*?<\/c>/g;let cm;
+    while((cm=ce.exec(rm[1]))!==null){
+      const ref=cm[1],t=cm[2],v=cm[3];const m2=ref.match(/^([A-Z]+)(\d+)$/);if(!m2) continue;
+      const col=colIdx(m2[1]);let val=v||"";if(t==="s") val=ss[parseInt(val)]||"";cells[col]=val;
+    }rows.push({cells});
+  }return rows;
+}
+function parseClientSheet(rows){
+  const svcColsV3={8:"GST",9:"TDS",10:"ROC"};
+  const svcColsV2={8:"GST",10:"TDS",12:"ROC"};
+  const result=[];
+  const isV3=rows.length>2&&Object.keys(rows[2]?.cells||{}).length<15;
+  const svcCols=isV3?svcColsV3:svcColsV2;
+  for(let i=2;i<rows.length;i++){
+    const cells=rows[i].cells;
+    const name=(cells[0]||"").trim();
+    if(!name||name.toLowerCase().startsWith("client")) continue;
+    const services=Object.entries(svcCols).filter(([col])=>(cells[parseInt(col)]||"").toUpperCase()==="Y").map(([,svc])=>svc);
+    if(!services.length) continue;
+    result.push({
+      id:Date.now().toString()+(Math.random()*9999|0),
+      name,contact:(cells[1]||"").trim(),phone:(cells[2]||"").trim(),
+      email:(cells[3]||"").trim(),entity:(cells[4]||"Individual").trim()||"Individual",
+      gstType:(cells[5]||"").trim(),pan:(cells[6]||"").trim(),
+      gstin:(cells[7]||"").trim(),services,
+      remarks:(cells[isV3?11:16]||"").trim()
+    });
+  }return result;
+}
+function loadJSZip(){
+  return new Promise((resolve,reject)=>{
+    if(window.JSZip){resolve(window.JSZip);return;}
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    s.onload=()=>resolve(window.JSZip);
+    s.onerror=()=>reject(new Error("Failed to load JSZip."));
+    document.head.appendChild(s);
+  });
+}
+
+// ══ Navigation ════════════════════════════════════════════════════════════
+const TABS=["dashboard","scheduler","reminders","import","add","clients","dues","settings","log"];
+function goTab(t){
+  TABS.forEach((id,i)=>{
+    document.getElementById("tab-"+id).classList.toggle("active",id===t);
+    document.querySelectorAll(".nav-item")[i].classList.toggle("active",id===t);
+  });
+  if(t==="clients") renderClients();
+  if(t==="dues") renderDues();
+  if(t==="reminders") renderReminders();
+  if(t==="log") renderLog();
+  if(t==="scheduler") renderSchedLog();
+}
+function setRF(btn,d){ rf=d; document.querySelectorAll("#tab-reminders .pill").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); renderReminders(); }
+function setDF(btn,f){ dueFilter=f; document.querySelectorAll("#due-pills .pill").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); renderDues(); }
+
+// Drag & drop
+const dz=document.getElementById("dz");
+dz.addEventListener("dragover",e=>{e.preventDefault();dz.style.background="#C8E6F9"});
+dz.addEventListener("dragleave",()=>dz.style.background="");
+dz.addEventListener("drop",e=>{e.preventDefault();dz.style.background="";const f=e.dataTransfer.files[0];if(f){document.getElementById("xl-file").files=e.dataTransfer.files;handleXL({target:{files:[f]}});}});
+
+// ══ Init ══════════════════════════════════════════════════════════════════
+load();
+</script>
+</body>
+</html>
