@@ -435,6 +435,38 @@ input:focus,select:focus,textarea:focus{border-color:var(--sky)}
 <div id="tab-settings" class="section">
   <div class="topbar"><div class="topbar-left"><h2>Settings &amp; Integrations</h2><p>One-time setup — system runs autonomously after this</p></div></div>
 
+  <div class="card" id="setup-checklist-card" style="margin-bottom:16px;border:2px solid var(--gold)">
+    <p class="section-title">🚦 Setup Status — Complete all 3 steps to activate auto-reminders</p>
+    <div id="checklist-body" style="display:grid;gap:8px">
+      <div id="chk-emailjs" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:#f8fafc">
+        <span id="chk-emailjs-icon" style="font-size:18px">⬜</span>
+        <div>
+          <div style="font-weight:700;font-size:13px">Step 1 — EmailJS Keys</div>
+          <div id="chk-emailjs-msg" style="font-size:12px;color:var(--muted)">Public Key, Service ID and Template ID not yet entered</div>
+        </div>
+      </div>
+      <div id="chk-clients" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:#f8fafc">
+        <span id="chk-clients-icon" style="font-size:18px">⬜</span>
+        <div>
+          <div style="font-weight:700;font-size:13px">Step 2 — Client Data</div>
+          <div id="chk-clients-msg" style="font-size:12px;color:var(--muted)">No clients imported yet — go to Import Clients tab</div>
+        </div>
+      </div>
+      <div id="chk-autosend" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;background:#f8fafc">
+        <span id="chk-autosend-icon" style="font-size:18px">⬜</span>
+        <div>
+          <div style="font-weight:700;font-size:13px">Step 3 — Auto-Send Enabled</div>
+          <div id="chk-autosend-msg" style="font-size:12px;color:var(--muted)">Toggle "Auto-send reminders" ON below</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-gold" onclick="runAutoSendPipeline(false);this.textContent='Sending…';setTimeout(()=>this.textContent='📧 Send Reminders NOW (Test)',2000)" style="font-size:13px">📧 Send Reminders NOW (Test)</button>
+      <span style="font-size:12px;color:var(--muted)">↑ Sends real emails to all clients with dues in next 5 days — use to verify setup</span>
+    </div>
+  </div>
+
+
   <div class="card" style="margin-bottom:16px">
     <p class="section-title">📧 EmailJS Configuration</p>
     <div class="alert alert-info" style="margin-bottom:12px">
@@ -1037,6 +1069,7 @@ function renderAll(){
   renderDashboard(); renderReminders(); renderClients();
   renderDues(); renderLog(); renderSchedLog();
   document.getElementById("client-count").textContent=clients.length+" client(s) registered";
+  if(typeof updateChecklist==="function") updateChecklist();
 }
 
 function renderDashboard(){
@@ -1199,6 +1232,40 @@ function renderSchedLog(){
   }).join("");
 }
 
+
+// ══ Setup Checklist ════════════════════════════════════════════════════════
+function updateChecklist(){
+  // Step 1: EmailJS
+  const ejsOk = !!(settings.ejsPubKey && settings.ejsService && settings.ejsTemplate);
+  document.getElementById("chk-emailjs-icon").textContent = ejsOk ? "✅" : "❌";
+  document.getElementById("chk-emailjs").style.background = ejsOk ? "#f0fdf4" : "#fef2f2";
+  document.getElementById("chk-emailjs-msg").textContent = ejsOk
+    ? "EmailJS configured — emails can be sent ✓"
+    : "Enter Public Key, Service ID and Template ID below";
+
+  // Step 2: Clients
+  const clientsOk = clients.length > 0;
+  document.getElementById("chk-clients-icon").textContent = clientsOk ? "✅" : "❌";
+  document.getElementById("chk-clients").style.background = clientsOk ? "#f0fdf4" : "#fef2f2";
+  document.getElementById("chk-clients-msg").textContent = clientsOk
+    ? clients.length + " client(s) loaded ✓"
+    : "No clients yet — go to Import Clients tab";
+
+  // Step 3: Auto-send on
+  const autoOk = !!(settings.autoSend && ejsOk);
+  document.getElementById("chk-autosend-icon").textContent = autoOk ? "✅" : (settings.autoSend ? "⚠️" : "❌");
+  document.getElementById("chk-autosend").style.background = autoOk ? "#f0fdf4" : (settings.autoSend ? "#fffbeb" : "#fef2f2");
+  document.getElementById("chk-autosend-msg").textContent = autoOk
+    ? "Auto-send ON — reminders fire at " + (settings.schedTime||"09:00") + " daily ✓"
+    : settings.autoSend
+      ? "Auto-send toggled ON but EmailJS not configured yet"
+      : "Toggle 'Auto-send reminders' ON below and save";
+
+  // Hide card if all green
+  const allOk = ejsOk && clientsOk && autoOk;
+  const card = document.getElementById("setup-checklist-card");
+  if(card) card.style.borderColor = allOk ? "var(--green)" : "var(--gold)";
+}
 // ══ Settings ══════════════════════════════════════════════════════════════
 function applySettings(){
   document.getElementById("ejs-pubkey").value   = settings.ejsPubKey   || "";
@@ -1216,6 +1283,7 @@ function applySettings(){
   document.getElementById("sched-time").value    = settings.schedTime   || "09:00";
   document.getElementById("sched-interval").value= settings.schedInterval|| "300";
   rf = parseInt(settings.remindDays||5);
+  updateChecklist();
 }
 
 async function saveSettings(){
@@ -1242,6 +1310,7 @@ async function saveSettings(){
   initEmailJS();
   if(settings.autoSend && settings.ejsPubKey) startScheduler();
   else stopScheduler();
+  updateChecklist();
   renderAll();
 }
 
@@ -1440,24 +1509,64 @@ function parseWS(xml,ss){
   }return rows;
 }
 function parseClientSheet(rows){
-  const svcColsV3={8:"GST",9:"TDS",10:"ROC"};
-  const svcColsV2={8:"GST",10:"TDS",12:"ROC"};
   const result=[];
-  const isV3=rows.length>2&&Object.keys(rows[2]?.cells||{}).length<15;
-  const svcCols=isV3?svcColsV3:svcColsV2;
-  for(let i=2;i<rows.length;i++){
+  // ── Find header row dynamically (scan first 5 rows for "name"/"client") ──
+  let headerRowIdx=-1;
+  let colMap={name:0,contact:1,phone:2,email:3,entity:4,gstType:5,pan:6,gstin:7,gst:8,tds:9,roc:10,remarks:11};
+  for(let i=0;i<Math.min(rows.length,5);i++){
+    const c=rows[i].cells;
+    const v=(c[0]||"").toLowerCase();
+    if(v.includes("client")||v.includes("name")){
+      headerRowIdx=i;
+      const hdrs={};
+      Object.entries(c).forEach(([idx,val])=>{
+        const k=(val||"").toLowerCase().replace(/[^a-z]/g,"");
+        hdrs[k]=parseInt(idx);
+      });
+      const find=(keys)=>{for(const k of keys){for(const [hk,hi] of Object.entries(hdrs)){if(hk.includes(k)) return hi;}}return -1;};
+      const nm=find(["name","client"]); if(nm>=0) colMap.name=nm;
+      const ct=find(["contact","person"]); if(ct>=0) colMap.contact=ct;
+      const ph=find(["phone","whatsapp","mobile"]); if(ph>=0) colMap.phone=ph;
+      const em=find(["email","mail"]); if(em>=0) colMap.email=em;
+      const en=find(["entity","type"]); if(en>=0) colMap.entity=en;
+      const gt=find(["gstfiling","filing","gsttype"]); if(gt>=0) colMap.gstType=gt;
+      const pn=find(["pan"]); if(pn>=0) colMap.pan=pn;
+      const gs=find(["gstin"]); if(gs>=0) colMap.gstin=gs;
+      const svcMap={};
+      Object.entries(c).forEach(([idx,val])=>{
+        const v2=(val||"").toUpperCase().trim();
+        if(v2==="GST") svcMap["GST"]=parseInt(idx);
+        if(v2==="TDS") svcMap["TDS"]=parseInt(idx);
+        if(v2==="ROC") svcMap["ROC"]=parseInt(idx);
+      });
+      if(svcMap["GST"]>=0) colMap.gst=svcMap["GST"];
+      if(svcMap["TDS"]>=0) colMap.tds=svcMap["TDS"];
+      if(svcMap["ROC"]>=0) colMap.roc=svcMap["ROC"];
+      break;
+    }
+  }
+  const dataStart=headerRowIdx>=0?headerRowIdx+1:2;
+  for(let i=dataStart;i<rows.length;i++){
     const cells=rows[i].cells;
-    const name=(cells[0]||"").trim();
-    if(!name||name.toLowerCase().startsWith("client")) continue;
-    const services=Object.entries(svcCols).filter(([col])=>(cells[parseInt(col)]||"").toUpperCase()==="Y").map(([,svc])=>svc);
+    const name=(cells[colMap.name]||"").trim();
+    if(!name||name.toLowerCase().startsWith("client")||name.toLowerCase().startsWith("name")) continue;
+    const services=[];
+    if((cells[colMap.gst]||"").toUpperCase()==="Y") services.push("GST");
+    if((cells[colMap.tds]||"").toUpperCase()==="Y") services.push("TDS");
+    if((cells[colMap.roc]||"").toUpperCase()==="Y") services.push("ROC");
     if(!services.length) continue;
     result.push({
       id:Date.now().toString()+(Math.random()*9999|0),
-      name,contact:(cells[1]||"").trim(),phone:(cells[2]||"").trim(),
-      email:(cells[3]||"").trim(),entity:(cells[4]||"Individual").trim()||"Individual",
-      gstType:(cells[5]||"").trim(),pan:(cells[6]||"").trim(),
-      gstin:(cells[7]||"").trim(),services,
-      remarks:(cells[isV3?11:16]||"").trim()
+      name,
+      contact:(cells[colMap.contact]||"").trim(),
+      phone:(cells[colMap.phone]||"").trim(),
+      email:(cells[colMap.email]||"").trim(),
+      entity:(cells[colMap.entity]||"Individual").trim()||"Individual",
+      gstType:(cells[colMap.gstType]||"").trim(),
+      pan:(cells[colMap.pan]||"").trim(),
+      gstin:(cells[colMap.gstin]||"").trim(),
+      services,
+      remarks:(cells[colMap.remarks]||"").trim()
     });
   }return result;
 }
